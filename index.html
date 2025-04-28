@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Benchmark Ryzen vs Xeon</title>
+</head>
+<body>
+    <h1>AI Inference Benchmark</h1>
+    <form id="upload-form">
+        <input type="file" id="image-upload" name="image">
+        <br><br>
+        <button type="button" onclick="uploadImage()">Predict</button>
+    </form>
+
+    <h2>Results</h2>
+    <div style="display: flex;">
+        <div style="margin-right: 50px;">
+            <h3>Ryzen Server</h3>
+            <img id="ryzen-image" src="" style="max-width:300px;"><br>
+            <p id="ryzen-result">Waiting...</p>
+        </div>
+        <div>
+            <h3>Xeon Server</h3>
+            <img id="xeon-image" src="" style="max-width:300px;"><br>
+            <p id="xeon-result">Waiting...</p>
+        </div>
+    </div>
+
+    <script>
+        function uploadImage() {
+            const fileInput = document.getElementById('image-upload');
+            if (!fileInput.files[0]) {
+                alert('Please select an image first!');
+                return;
+            }
+        
+            // Show preview immediately
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('ryzen-image').src = e.target.result;
+                document.getElementById('xeon-image').src = e.target.result;
+            };
+            reader.readAsDataURL(fileInput.files[0]);
+        
+            // FUNCTION: Create new FormData
+            function createFormData() {
+                const newFormData = new FormData();
+                newFormData.append('image', fileInput.files[0]);
+                return newFormData;
+            }
+        
+            // Ryzen server
+            fetch('http://160.191.54.175:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                body: createFormData()
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ryzen-result').innerHTML = `
+                    Class: ${data.predicted_class}<br>
+                    Confidence: ${data.confidence}<br>
+                    Inference Time: ${data.inference_time_ms} ms
+                `;
+            })
+            .catch(error => {
+                document.getElementById('ryzen-result').innerHTML = 'Error contacting Ryzen server.';
+                console.error('Error:', error);
+            });
+        
+            // Xeon server
+            fetch('http://103.178.235.190:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                },
+                body: createFormData()
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('xeon-result').innerHTML = `
+                    Class: ${data.predicted_class}<br>
+                    Confidence: ${data.confidence}<br>
+                    Inference Time: ${data.inference_time_ms} ms
+                `;
+            })
+            .catch(error => {
+                document.getElementById('xeon-result').innerHTML = 'Error contacting Xeon server.';
+                console.error('Error:', error);
+            });
+        }
+        </script>        
+</body>
+</html>
